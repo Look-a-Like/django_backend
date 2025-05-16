@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os  # Add this import for environment variables
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ii*^)cc4fa^1ot8a(usl&x29i=jk#u*=wszal$1e34+op27i%y'
+# Read from environment variable if available, otherwise use default
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ii*^)cc4fa^1ot8a(usl&x29i=jk#u*=wszal$1e34+op27i%y')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Read from environment variable if available, otherwise use default (True for development)
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+# Read ALLOWED_HOSTS from environment variable, with a fallback to localhost
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Print ALLOWED_HOSTS for debugging during startup
+print(f"ALLOWED_HOSTS set to: {ALLOWED_HOSTS}")
 
 
 # Application definition
@@ -79,6 +86,14 @@ DATABASES = {
     }
 }
 
+# Use DATABASE_URL environment variable if available (for Render PostgreSQL)
+if 'DATABASE_URL' in os.environ:
+    import dj_database_url
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -115,6 +130,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
